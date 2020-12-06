@@ -12,25 +12,29 @@ var defaultOptions = {
 	binDir: join(__dirname, 'steamcmd_bin')
 }
 
-var download = function (opts) {
+const download = function (opts) {
 	opts = _.defaults(opts, defaultOptions);
-	var url, extractor;
+	let url, extractor;
 	return new Promise(function (resolve, reject) {
 		if (process.platform === 'win32') {
 			url = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip'
-			extractor = require('unzipper')
+			extractor = require('unzipper');
 		} else if (process.platform === 'darwin') {
 			url = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_osx.tar.gz'
-			extractor = require('tar')
+			extractor = require('tar');
 		} else if (process.platform === 'linux') {
 			url = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz'
-			extractor = require('tar')
+			extractor = require('tar');
 		} else {
 			reject(Error('Unsupported platform'));
 		}
 		axios(url, { responseType: 'stream' })
 			.then((res) => {
-				res.data.pipe(
+				let buffer = res.data;
+				if (process.platform !== 'win32') {
+					buffer = buffer.pipe(require('zlib').createGunzip())
+				}
+				buffer.pipe(
 					extractor.Extract({ path: opts.binDir })
 						.on('finish', resolve)
 						.on('error', reject)
@@ -40,22 +44,9 @@ var download = function (opts) {
 	})
 }
 
-var downloadIfNeeded = function (opts) {
+const run = function (commands, opts) {
 	opts = _.defaults(opts, defaultOptions)
-	return new Promise((resolve) => {
-		stat(opts.binDir)
-			.then(() => {
-				resolve();
-			})
-			.catch((err) => {
-				return downloadSteamCMD(opts)
-			});
-	});
-}
-
-var run = function (commands, opts) {
-	opts = _.defaults(opts, defaultOptions)
-	var exeName
+	let exeName
 	if (process.platform === 'win32') {
 		exeName = 'steamcmd.exe'
 	} else if (process.platform === 'darwin') {
@@ -84,12 +75,12 @@ var run = function (commands, opts) {
 	})
 }
 
-var check = function (opts) {
+const check = function (opts) {
 	opts = _.defaults(opts, defaultOptions)
 	return run([], opts)
 }
 
-var getAppInfo = function (appID, opts) {
+const getAppInfo = function (appID, opts) {
 	opts = _.defaults(opts, defaultOptions)
 
 	// The first call to app_info_print from a new install will return nothing,
@@ -128,7 +119,7 @@ var getAppInfo = function (appID, opts) {
 	});
 }
 
-var install = function (opts) {
+const install = function (opts) {
 	opts = _.defaults(opts, defaultOptions)
 	return new Promise((resolve, reject) => {
 		download(opts)
