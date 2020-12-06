@@ -1,8 +1,9 @@
-import request from 'request';
+import axios from 'axios';
 import { join } from 'path';
-import { statSync } from 'fs';
 import { spawn } from 'child-process-promise';
 import { parse } from '@node-steam/vdf';
+
+const { stat } = require('fs').promises;
 
 var _ = {}
 _.defaults = require('lodash.defaults')
@@ -11,41 +12,45 @@ var defaultOptions = {
 	binDir: join(__dirname, 'steamcmd_bin')
 }
 
-var downloadSteamCMD = function (opts) {
+var download = function (opts) {
 	opts = _.defaults(opts, defaultOptions);
 	var url, extractor;
-	if (process.platform === 'win32') {
-		url = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip'
-		extractor = require('unzipper')
-	} else if (process.platform === 'darwin') {
-		url = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_osx.tar.gz'
-		extractor = require('tar')
-	} else if (process.platform === 'linux') {
-		url = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz'
-		extractor = require('tar')
-	} else {
-		return _reject('Unsupported platform')
-	}
 	return new Promise(function (resolve, reject) {
-		var req = request(url)
-		if (process.platform !== 'win32') {
-			req = req.pipe(require('zlib').createGunzip())
+		if (process.platform === 'win32') {
+			url = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip'
+			extractor = require('unzipper')
+		} else if (process.platform === 'darwin') {
+			url = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_osx.tar.gz'
+			extractor = require('tar')
+		} else if (process.platform === 'linux') {
+			url = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz'
+			extractor = require('tar')
+		} else {
+			reject(Error('Unsupported platform'));
 		}
-		req.pipe(extractor.Extract({path: opts.binDir})
-			.on('finish', resolve)
-			.on('error', reject)
-		)
+		axios(url, { responseType: 'stream' })
+			.then((res) => {
+				res.data.pipe(
+					extractor.Extract({ path: opts.binDir })
+						.on('finish', resolve)
+						.on('error', reject)
+				)
+			})
+			.catch((e) => reject(e));
 	})
 }
 
-var download = function (opts) {
+var downloadIfNeeded = function (opts) {
 	opts = _.defaults(opts, defaultOptions)
-	try {
-		statSync(opts.binDir)
-		return _resolve()
-	} catch (err) {
-		return download(opts)
-	}
+	return new Promise((resolve) => {
+		stat(opts.binDir)
+			.then(() => {
+				resolve();
+			})
+			.catch((err) => {
+				return downloadSteamCMD(opts)
+			});
+	});
 }
 
 var run = function (commands, opts) {
@@ -79,7 +84,7 @@ var run = function (commands, opts) {
 	})
 }
 
-var touch = function (opts) {
+var check = function (opts) {
 	opts = _.defaults(opts, defaultOptions)
 	return run([], opts)
 }
@@ -123,14 +128,14 @@ var getAppInfo = function (appID, opts) {
 	});
 }
 
-var prep = function (opts) {
+var install = function (opts) {
 	opts = _.defaults(opts, defaultOptions)
 	return new Promise((resolve, reject) => {
-		downloadSteamCMD(opts)
+		download(opts)
 			.then(() => { 
 				return new Promise(resolve => setTimeout(resolve, 500))})
 			.then(() => { 
-				return touch(opts); 
+				return check(opts); 
 			})
 			.then(() => { 
 				return resolve(); 
@@ -142,8 +147,7 @@ var prep = function (opts) {
 }
 
 export default {
-	download,
-	touch,
-	prep,
+	install,
+	check,
 	getAppInfo
 }

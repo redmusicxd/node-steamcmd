@@ -1,20 +1,12 @@
 {
   "name": "steamcmd",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Call SteamCMD from node.js",
   "license": "MIT",
-  "repository": "mathphreak/node-steamcmd",
+  "repository": "pierluigizagaria/node-steamcmd",
   "author": {
-    "name": "Matt Horn",
-    "email": "matt@matthorn.tech",
-    "url": "http://www.matthorn.tech"
-  },
-  "engines": {
-    "node": ">=4.7.0"
-  },
-  "scripts": {
-    "start": "node -r esm app.js",
-    "dev": "nodemon -r esm app.js"
+    "name": "Pierluigi Zagaria",
+    "email": "pierluigizagaria@gmai.com"
   },
   "files": [
     "index.js"
@@ -26,14 +18,13 @@
   "dependencies": {
     "@node-steam/vdf": "^2.1.0",
     "axios": "^0.21.0",
+    "esm": "^3.2.25",
     "child-process-promise": "^2.2.0",
     "lodash.defaults": "^4.2.0",
-    "request": "^2.81.0",
     "tar": "^2.2.1",
     "unzipper": "^0.10.11"
   },
   "devDependencies": {
-    "esm": "^3.2.25",
     "nodemon": "^2.0.6"
   }
 }
