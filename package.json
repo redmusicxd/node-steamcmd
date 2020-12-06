@@ -13,7 +13,8 @@
     "node": ">=4.7.0"
   },
   "scripts": {
-    "test": "xo && ava"
+    "start": "node -r esm app.js",
+    "dev": "nodemon -r esm app.js"
   },
   "files": [
     "index.js"
@@ -23,23 +24,16 @@
     "steam"
   ],
   "dependencies": {
-    "child-process-promise": "2.2.0",
-    "lodash.defaults": "4.2.0",
-    "pinkie-promise": "2.0.1",
-    "request": "2.81.0",
-    "tar": "2.2.1",
-    "unzip": "0.1.11",
-    "vdf": "0.0.2"
+    "@node-steam/vdf": "^2.1.0",
+    "axios": "^0.21.0",
+    "child-process-promise": "^2.2.0",
+    "lodash.defaults": "^4.2.0",
+    "request": "^2.81.0",
+    "tar": "^2.2.1",
+    "unzipper": "^0.10.11"
   },
   "devDependencies": {
-    "ava": "0.18.2",
-    "del": "2.2.2",
-    "mkdirp": "0.5.1",
-    "tempfile": "1.1.1",
-    "xo": "0.17.1"
-  },
-  "xo": {
-    "semicolon": false,
-    "space": 2
+    "esm": "^3.2.25",
+    "nodemon": "^2.0.6"
   }
 }
