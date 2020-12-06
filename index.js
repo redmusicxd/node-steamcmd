@@ -2,6 +2,8 @@ import axios from 'axios';
 import { join } from 'path';
 import { spawn } from 'child-process-promise';
 import { parse } from '@node-steam/vdf';
+import unzipper from 'unzipper';
+import tar from 'tar';
 
 const { stat } = require('fs').promises;
 
@@ -9,7 +11,7 @@ var _ = {}
 _.defaults = require('lodash.defaults')
 
 var defaultOptions = {
-	binDir: join(__dirname, 'steamcmd_bin')
+	binDir: join(__dirname, 'steam-cmd')
 }
 
 const download = function (opts) {
@@ -18,13 +20,13 @@ const download = function (opts) {
 	return new Promise(function (resolve, reject) {
 		if (process.platform === 'win32') {
 			url = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip'
-			extractor = require('unzipper');
+			extractor = unzipper;
 		} else if (process.platform === 'darwin') {
 			url = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_osx.tar.gz'
-			extractor = require('tar');
+			extractor = tar;
 		} else if (process.platform === 'linux') {
 			url = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz'
-			extractor = require('tar');
+			extractor = tar;
 		} else {
 			reject(Error('Unsupported platform'));
 		}
