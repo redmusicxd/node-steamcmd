@@ -58,13 +58,12 @@ const run = function (commands, opts) {
 	} else {
 		return _reject('Unsupported platform')
 	}
-	var args = commands.concat('quit').map(function (x) {
-		return '+' + x
-	}).join(' ').split(' ')
+	var args = commands.concat('quit').join('\n')
+	writeFileSync(join(opts.binDir, "commands.txt"), args)
 	return new Promise(function (resolve, reject) {
-		spawn(join(opts.binDir, exeName), args, {
+		spawn(join(opts.binDir, exeName), ["+runscript", "commands.txt"], {
 			capture: ['stdout', 'stderr'],
-			cwd: opts.binDir
+			cwd: opts.binDir,
 		})
 		.then((x) => { 
 			resolve(x); 
@@ -84,35 +83,19 @@ const check = function (opts) {
 
 const getAppInfo = function (appID, opts) {
 	opts = _.defaults(opts, defaultOptions)
-
-	// The first call to app_info_print from a new install will return nothing,
-	// and it will instead prep an entry for the info and request it.
-	// It won't block though, and if the session closes before it can save,
-	// the same issue will be present on next run.
-	// Thus we use `app_update` to force the session to wait long enough to save.
-	var forceInfoCommand = [
-		'@ShutdownOnFailedCommand 0', 'login anonymous',
-		'app_info_print ' + appID,
-		'force_install_dir ./4', 'app_update 4', 'find e'
-	]
-
-	// The output from app_update can collide with that of app_info_print,
-	// so after ensuring the info is available we must re-run without app_update.
+	
 	var fetchInfoCommand = [
-		'@ShutdownOnFailedCommand 0', 'login anonymous',
+		'@ShutdownOnFailedCommand 0',
+		'login anonymous',
 		'app_info_update 1', // force data update
 		'app_info_print ' + appID,
-		'find e' // fill the buffer so info's not truncated on Windows
+		'find e'
 	]
 
 	return new Promise((resolve, reject) => {
 		run(forceInfoCommand, opts) // @todo only force when needed
-			// .then(() => {
-			// 	return run(fetchInfoCommand, opts)
-			// })
 			.then((proc) => {
 				var stdout = proc.stdout.replace('\r\n', '\n')
-				console.log(stdout);
 				var infoTextStart = stdout.indexOf('"' + appID + '"')
 				var infoTextEnd = stdout.indexOf('ConVars:')
 				var infoText = stdout.substr(infoTextStart, infoTextEnd - infoTextStart)
