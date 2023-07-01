@@ -4,6 +4,7 @@ import { spawn } from 'child-process-promise';
 import { parse } from '@node-steam/vdf';
 import unzipper from 'unzipper';
 import tar from 'tar';
+import { writeFileSync } from 'fs';
 
 const { stat } = require('fs').promises;
 
@@ -59,13 +60,15 @@ const run = function (commands, opts) {
 		return _reject('Unsupported platform')
 	}
 	var args = commands.concat('quit').join('\n')
+	console.log(args);
 	writeFileSync(join(opts.binDir, "commands.txt"), args)
 	return new Promise(function (resolve, reject) {
 		spawn(join(opts.binDir, exeName), ["+runscript", "commands.txt"], {
 			capture: ['stdout', 'stderr'],
 			cwd: opts.binDir,
 		})
-		.then((x) => { 
+			.then((x) => { 
+			// console.log(x);
 			resolve(x); 
 		})
 		.catch((x) => {
@@ -83,7 +86,21 @@ const check = function (opts) {
 
 const getAppInfo = function (appID, opts) {
 	opts = _.defaults(opts, defaultOptions)
-	
+
+	// // The first call to app_info_print from a new install will return nothing,
+	// // and it will instead prep an entry for the info and request it.
+	// // It won't block though, and if the session closes before it can save,
+	// // the same issue will be present on next run.
+	// // Thus we use `app_update` to force the session to wait long enough to save.
+	// var forceInfoCommand = [
+	// 	'@ShutdownOnFailedCommand 0', 'login anonymous',
+	// 	'app_info_print ' + appID,
+	// 	'force_install_dir ./4',
+	// 	'app_update 4'
+	// ]
+
+	// The output from app_update can collide with that of app_info_print,
+	// so after ensuring the info is available we must re-run without app_update.
 	var fetchInfoCommand = [
 		'@ShutdownOnFailedCommand 0',
 		'login anonymous',
@@ -93,15 +110,15 @@ const getAppInfo = function (appID, opts) {
 	]
 
 	return new Promise((resolve, reject) => {
-		run(forceInfoCommand, opts) // @todo only force when needed
+		run(fetchInfoCommand, opts) // @todo only force when needed
+			// .then(() => {
+			// 	return run(fetchInfoCommand, opts)
+			// })
 			.then((proc) => {
 				var stdout = proc.stdout.replace('\r\n', '\n')
 				var infoTextStart = stdout.indexOf('"' + appID + '"')
 				var infoTextEnd = stdout.indexOf('ConVars:')
 				var infoText = stdout.substr(infoTextStart, infoTextEnd - infoTextStart)
-				console.log(infoTextStart);
-				console.log(infoTextEnd);
-				console.log(infoText);
 				return resolve(parse(infoText)[appID]);
 			})
 			.catch((e) => reject(e));
