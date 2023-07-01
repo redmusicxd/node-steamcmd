@@ -115,6 +115,9 @@ const getAppInfo = function (appID, opts) {
 				var infoTextStart = stdout.indexOf('"' + appID + '"')
 				var infoTextEnd = stdout.indexOf('ConVars:')
 				var infoText = stdout.substr(infoTextStart, infoTextEnd - infoTextStart)
+				console.log(infoTextStart);
+				console.log(infoTextEnd);
+				console.log(infoText);
 				return resolve(parse(infoText)[appID]);
 			})
 			.catch((e) => reject(e));
