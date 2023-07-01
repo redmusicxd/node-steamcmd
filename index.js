@@ -112,6 +112,7 @@ const getAppInfo = function (appID, opts) {
 			// })
 			.then((proc) => {
 				var stdout = proc.stdout.replace('\r\n', '\n')
+				console.log(stdout);
 				var infoTextStart = stdout.indexOf('"' + appID + '"')
 				var infoTextEnd = stdout.indexOf('ConVars:')
 				var infoText = stdout.substr(infoTextStart, infoTextEnd - infoTextStart)
