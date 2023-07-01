@@ -93,7 +93,7 @@ const getAppInfo = function (appID, opts) {
 	var forceInfoCommand = [
 		'@ShutdownOnFailedCommand 0', 'login anonymous',
 		'app_info_print ' + appID,
-		'force_install_dir ./4', 'app_update 4'
+		'force_install_dir ./4', 'app_update 4', 'find e'
 	]
 
 	// The output from app_update can collide with that of app_info_print,
@@ -107,9 +107,9 @@ const getAppInfo = function (appID, opts) {
 
 	return new Promise((resolve, reject) => {
 		run(forceInfoCommand, opts) // @todo only force when needed
-			.then(() => {
-				return run(fetchInfoCommand, opts)
-			})
+			// .then(() => {
+			// 	return run(fetchInfoCommand, opts)
+			// })
 			.then((proc) => {
 				var stdout = proc.stdout.replace('\r\n', '\n')
 				var infoTextStart = stdout.indexOf('"' + appID + '"')
